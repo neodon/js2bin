@@ -24,11 +24,17 @@ source = parts[1];
 
 // here we turn what looks like an internal module to an non-internal one
 // that way the module is loaded exactly as it would by: node app_main.js
-new Module(process.execPath, null)._compile(`
+const mod = new Module(process.execPath, null);
+mod.id = '.';              // main module 
+mod.filename = filename;   // dirname of this is used by require
+process.mainModule = mod;  // main module
+mod._compile(`
 
 // initialize clustering
-if (process.argv[1] && process.env.NODE_UNIQUE_ID) {
-   const cluster = require('cluster')
+const cluster = require('cluster');
+if (cluster.worker) {
+   // NOOP - cluster worker already initialized, likely Node 12.x+ 
+}else if (process.argv[1] && process.env.NODE_UNIQUE_ID) {
    cluster._setupWorker()
    delete process.env.NODE_UNIQUE_ID
 } else {
